@@ -1,7 +1,9 @@
 package com.example.realdata;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 
@@ -9,6 +11,7 @@ import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 
@@ -45,6 +48,12 @@ public class LocationSender implements Runnable {
                                     Log.d(msg, in.toString());
                                     int status = httpURLConnection.getResponseCode();
                                     Log.d(msg, "Status: " + String.valueOf(status));
+
+                                    if (status == 200) {
+                                        TextView txtView = ((Activity)State.activityContext).findViewById(R.id.lastSend);
+                                        txtView.setText("Last sent: " + LocalDateTime.now().toString());
+                                    }
+
                                 } catch (Exception ex) {
                                     Log.d(msg, "Exception: " + ex.getMessage());
                                 }
