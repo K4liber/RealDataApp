@@ -3,7 +3,7 @@ package com.example.realdata;
 import android.Manifest;
 import android.content.Intent;
 
-import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.os.StrictMode;
@@ -13,12 +13,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
-
-import com.google.android.gms.location.LocationAvailability;
-import com.google.android.gms.tasks.Task;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,8 +30,6 @@ import pub.devrel.easypermissions.EasyPermissions;
 public class MainActivity extends Activity implements EasyPermissions.PermissionCallbacks {
     static String msg = "Android : ";
     private final int REQUEST_LOCATION_PERMISSION = 1;
-    private Task<Location> taskLocation = null;
-    private Task<LocationAvailability> taskLocationAvailability = null;
     private final String[] perms =
             {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
 
@@ -40,7 +37,7 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         Button startSendingData = findViewById(R.id.startService);
         Button stopSendingData = findViewById(R.id.stopService);
 
-        if (enabled) {
+        if (enabled && !LocationSender.isRunning) {
             startSendingData.setEnabled(true);
             stopSendingData.setEnabled(false);
         } else {
@@ -49,6 +46,7 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +57,14 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         Log.d(msg, "The onCreate() event");
         State.serverURL = "http://13.36.229.179";
         State.activityContext = this;
+
+        if (LocationSender.lastSendLocation != null) {
+            TextView lastSendView = findViewById(R.id.lastSend);
+            lastSendView.setText("Last sent: " + LocationSender.lastSendLocation.toString());
+        }
+
+        TextView sendErrorView = findViewById(R.id.error);
+        sendErrorView.setText(LocationSender.error);
         this.setStart(true);
         EditText field1 = findViewById(R.id.serverURL);
         field1.setText(State.serverURL);
