@@ -3,7 +3,7 @@ package com.example.realdata;
 import android.Manifest;
 import android.content.Intent;
 
-import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.os.StrictMode;
@@ -11,11 +11,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.location.LocationAvailability;
-import com.google.android.gms.tasks.Task;
+import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,11 +30,23 @@ import pub.devrel.easypermissions.EasyPermissions;
 public class MainActivity extends Activity implements EasyPermissions.PermissionCallbacks {
     static String msg = "Android : ";
     private final int REQUEST_LOCATION_PERMISSION = 1;
-    private Task<Location> taskLocation = null;
-    private Task<LocationAvailability> taskLocationAvailability = null;
     private final String[] perms =
             {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
 
+    private void setStart(boolean enabled) {
+        Button startSendingData = findViewById(R.id.startService);
+        Button stopSendingData = findViewById(R.id.stopService);
+
+        if (enabled && !LocationSender.isRunning) {
+            startSendingData.setEnabled(true);
+            stopSendingData.setEnabled(false);
+        } else {
+            startSendingData.setEnabled(false);
+            stopSendingData.setEnabled(true);
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,9 +55,19 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         StrictMode.setThreadPolicy(policy);
         requestLocationPermission();
         Log.d(msg, "The onCreate() event");
-        Config.serverURL = "http://13.36.229.179";
+        State.serverURL = "http://13.36.229.179";
+        State.activityContext = this;
+
+        if (LocationSender.lastSendLocation != null) {
+            TextView lastSendView = findViewById(R.id.lastSend);
+            lastSendView.setText("Last sent: " + LocationSender.lastSendLocation.toString());
+        }
+
+        TextView sendErrorView = findViewById(R.id.error);
+        sendErrorView.setText(LocationSender.error);
+        this.setStart(true);
         EditText field1 = findViewById(R.id.serverURL);
-        field1.setText(Config.serverURL);
+        field1.setText(State.serverURL);
         field1.addTextChangedListener(new TextWatcher() {
             @Override
             public void afterTextChanged(Editable s) {}
@@ -57,7 +81,7 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
             public void onTextChanged(CharSequence s, int start,
                                       int before, int count) {
                 if(s.length() != 0)
-                    Config.serverURL = s.toString();
+                    State.serverURL = s.toString();
             }
         });
     }
@@ -107,7 +131,11 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
     public void startService(View view) {
         if (EasyPermissions.hasPermissions(this, perms)) {
             Toast.makeText(this, "Permission already granted", Toast.LENGTH_SHORT).show();
-            startService(new Intent(getBaseContext(), DataSendingService.class));
+            Intent serviceIntent = new Intent(this, SendService.class);
+            serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+            ContextCompat.startForegroundService(this, serviceIntent);
+            //startService(new Intent(getBaseContext(), SendService.class));
+            this.setStart(false);
         } else {
             requestLocationPermission();
         }
@@ -115,6 +143,7 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
 
     // Method to stop the service
     public void stopService(View view) {
-        stopService(new Intent(getBaseContext(), DataSendingService.class));
+        stopService(new Intent(getBaseContext(), SendService.class));
+        this.setStart(true);
     }
 }

@@ -49,10 +49,10 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_centerVertical="true"
-                android:src="@drawable/cat" />
+                android:src="@drawable/jbielecki" />
 
             <Button
-                android:id="@+id/button2"
+                android:id="@+id/startService"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/imageButton"
@@ -61,7 +61,7 @@
                 android:text="@string/start_sending_data" />
 
             <Button
-                android:id="@+id/button"
+                android:id="@+id/stopService"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/button2"
@@ -69,6 +69,24 @@
                 android:layout_alignEnd="@+id/button2"
                 android:onClick="stopService"
                 android:text="@string/stop_sending_data" />
+
+            <TextView
+                android:textStyle="bold"
+                android:textColor="@color/common_google_signin_btn_text_dark_focused"
+                android:id="@+id/lastSend"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Nothing send yet ..." />
+
+            <TextView
+                android:textStyle="bold"
+                android:textColor="@color/design_default_color_error"
+                android:id="@+id/error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="" />
 
 
         </LinearLayout>
