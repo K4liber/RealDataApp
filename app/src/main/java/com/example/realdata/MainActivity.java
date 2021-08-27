@@ -1,12 +1,14 @@
 package com.example.realdata;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.os.StrictMode;
+import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -29,22 +31,12 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends Activity implements EasyPermissions.PermissionCallbacks {
     static String msg = "Android : ";
-    private final int REQUEST_LOCATION_PERMISSION = 1;
-    private final String[] perms =
-            {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-
-    private void setStart(boolean enabled) {
-        Button startSendingData = findViewById(R.id.startService);
-        Button stopSendingData = findViewById(R.id.stopService);
-
-        if (enabled && !LocationSender.isRunning) {
-            startSendingData.setEnabled(true);
-            stopSendingData.setEnabled(false);
-        } else {
-            startSendingData.setEnabled(false);
-            stopSendingData.setEnabled(true);
-        }
-    }
+    private final int REQUEST_PERMISSIONS = 1;
+    private final String[] perms = {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.READ_PHONE_STATE
+    };
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -53,10 +45,14 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         setContentView(R.layout.activity_main);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        requestLocationPermission();
-        Log.d(msg, "The onCreate() event");
-        State.serverURL = "http://13.36.229.179";
-        State.activityContext = this;
+        requestPermissions();
+        setState();
+        setUI();
+    }
+
+    private void setUI() {
+        TextView deviceIdTestView = findViewById(R.id.deviceId);
+        deviceIdTestView.setText("Device ID: " + State.device_id);
 
         if (LocationSender.lastSendLocation != null) {
             TextView lastSendView = findViewById(R.id.lastSend);
@@ -84,6 +80,27 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
                     State.serverURL = s.toString();
             }
         });
+    }
+
+    private void setState() {
+        State.serverURL = "http://35.180.181.135:5000";
+        State.activityContext = this;
+        TelephonyManager telephonyManager =
+                (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
+        State.device_id = telephonyManager.getDeviceId();
+    }
+
+    private void setStart(boolean enabled) {
+        Button startSendingData = findViewById(R.id.startService);
+        Button stopSendingData = findViewById(R.id.stopService);
+
+        if (enabled && !LocationSender.isRunning) {
+            startSendingData.setEnabled(true);
+            stopSendingData.setEnabled(false);
+        } else {
+            startSendingData.setEnabled(false);
+            stopSendingData.setEnabled(true);
+        }
     }
 
     @Override
@@ -118,13 +135,14 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         }
     }
 
-    @AfterPermissionGranted(REQUEST_LOCATION_PERMISSION)
-    public void requestLocationPermission() {
+    @AfterPermissionGranted(REQUEST_PERMISSIONS)
+    public void requestPermissions() {
         if (EasyPermissions.hasPermissions(this, perms)) {
             Toast.makeText(this, "Permission already granted", Toast.LENGTH_SHORT).show();
         }
         else {
-            EasyPermissions.requestPermissions(this, "Please grant the location permission", REQUEST_LOCATION_PERMISSION, perms);
+            EasyPermissions.requestPermissions(
+                    this, "Please grant the permissions", REQUEST_PERMISSIONS, perms);
         }
     }
 
@@ -137,7 +155,7 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
             //startService(new Intent(getBaseContext(), SendService.class));
             this.setStart(false);
         } else {
-            requestLocationPermission();
+            requestPermissions();
         }
     }
 

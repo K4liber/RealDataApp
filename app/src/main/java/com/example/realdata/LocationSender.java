@@ -46,7 +46,8 @@ public class LocationSender implements Runnable {
                                     URL url = new URL(serverURL + "/location?" +
                                             "altitude=" + String.valueOf(location.getAltitude()) +
                                             "&longitude=" + String.valueOf(location.getLongitude()) +
-                                            "&latitude=" + String.valueOf(location.getLatitude())
+                                            "&latitude=" + String.valueOf(location.getLatitude()) +
+                                            "&device_id=" + State.device_id
                                     );
                                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                                     httpURLConnection.setRequestMethod("GET");
