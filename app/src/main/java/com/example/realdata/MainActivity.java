@@ -1,6 +1,7 @@
 package com.example.realdata;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 
@@ -62,9 +63,9 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         TextView sendErrorView = findViewById(R.id.error);
         sendErrorView.setText(LocationSender.error);
         this.setStart(true);
-        EditText field1 = findViewById(R.id.serverURL);
-        field1.setText(State.serverURL);
-        field1.addTextChangedListener(new TextWatcher() {
+        EditText serverURLField = findViewById(R.id.serverURL);
+        serverURLField.setText(State.serverURL);
+        serverURLField.addTextChangedListener(new TextWatcher() {
             @Override
             public void afterTextChanged(Editable s) {}
 
@@ -82,8 +83,8 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         });
     }
 
+    @SuppressLint("HardwareIds")
     private void setState() {
-        State.serverURL = "http://35.180.181.135:5000";
         State.activityContext = this;
         TelephonyManager telephonyManager =
                 (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
