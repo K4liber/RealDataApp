@@ -17,10 +17,16 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 
@@ -107,16 +113,46 @@ public class LocationSender implements Runnable {
                     "&latitude=" + String.valueOf(location.getLatitude()) +
                     "&device_id=" + this.deviceID
             );
+            URL utlPost = new URL(serverURL + "/location");
             HttpURLConnection httpURLConnection =
-                    (HttpURLConnection) url.openConnection();
-            httpURLConnection.setRequestMethod("GET");
-            InputStream in =
-                    new BufferedInputStream(httpURLConnection.getInputStream());
-            Log.d(msg, in.toString());
+                    (HttpURLConnection) utlPost.openConnection();
+            httpURLConnection.setRequestMethod("POST");
+            httpURLConnection.setDoInput(true);
+            httpURLConnection.setDoOutput(true);
+            StringBuilder result = new StringBuilder();
+            boolean first = true;
+            HashMap<String, String> values = new HashMap<>();
+            values.put("altitude", String.valueOf(location.getAltitude()));
+            values.put("longitude", String.valueOf(location.getLongitude()));
+            values.put("latitude", String.valueOf(location.getLatitude()));
+            values.put("device_id", this.deviceID);
+            values.put("secret_key", State.secretKey);
+
+            for(Map.Entry<String, String> entry : values.entrySet()){
+                if (first)
+                    first = false;
+                else
+                    result.append("&");
+
+                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            }
+            Log.d(msg, result.toString());
+            OutputStream os = httpURLConnection.getOutputStream();
+            BufferedWriter writer = new BufferedWriter(
+                    new OutputStreamWriter(os, "UTF-8"));
+            writer.write(result.toString());
+            writer.flush();
+            writer.close();
+            os.close();
             int status = httpURLConnection.getResponseCode();
             Log.d(msg, "Status: " + String.valueOf(status));
 
             if (status == 200) {
+                InputStream in =
+                        new BufferedInputStream(httpURLConnection.getInputStream());
+                Log.d(msg, in.toString());
                 error = "";
                 updateErrorTextView();
                 lastSendLocation = LocalDateTime.now();
