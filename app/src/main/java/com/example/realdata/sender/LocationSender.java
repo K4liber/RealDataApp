@@ -1,4 +1,4 @@
-package com.example.realdata;
+package com.example.realdata.sender;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -7,10 +7,11 @@ import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
+import com.example.realdata.R;
+import com.example.realdata.utils.State;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;

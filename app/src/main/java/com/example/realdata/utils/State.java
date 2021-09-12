@@ -1,10 +1,12 @@
-package com.example.realdata;
+package com.example.realdata.utils;
 
 import android.content.Context;
+
+import com.example.realdata.BuildConfig;
 
 public class State {
     public static String serverURL = "http://ucanthide.link:5000";
     public static Context activityContext = null;
-    public static String device_id = null;
+    public static String deviceId = null;
     public static final String secretKey = BuildConfig.SECRET_KEY;
 }

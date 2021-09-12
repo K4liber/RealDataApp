@@ -17,6 +17,8 @@ import android.os.StrictMode;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
+import com.example.realdata.sender.LocationSender;
+import com.example.realdata.utils.State;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 
@@ -78,15 +80,15 @@ public class SendService extends Service {
 
     @SuppressLint("HardwareIds")
     private String getDeviceID() {
-        if (State.device_id == null) {
+        if (State.deviceId == null) {
             TelephonyManager telephonyManager =
                     (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-            State.device_id = telephonyManager.getDeviceId();
+            State.deviceId = telephonyManager.getDeviceId();
         }
 
-        if (State.device_id == null) {
+        if (State.deviceId == null) {
             Toast.makeText(this, "Cannot get device ID", Toast.LENGTH_LONG).show();
         }
-        return State.device_id;
+        return State.deviceId;
     }
 }

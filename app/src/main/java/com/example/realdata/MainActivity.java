@@ -5,10 +5,12 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.os.StrictMode;
+import android.provider.MediaStore;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -22,6 +24,14 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import com.example.realdata.sender.LocationSender;
+import com.example.realdata.sender.ViewSender;
+import com.example.realdata.utils.Config;
+import com.example.realdata.utils.State;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,13 +41,16 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 
 public class MainActivity extends Activity implements EasyPermissions.PermissionCallbacks {
+    private static final int REQUEST_CAMERA = 2;
     static String msg = "Android : ";
     private final int REQUEST_PERMISSIONS = 1;
     private final String[] perms = {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.READ_PHONE_STATE
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+    private final String tag = "MainActivity";
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -53,7 +66,7 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
 
     private void setUI() {
         TextView deviceIdTestView = findViewById(R.id.deviceId);
-        deviceIdTestView.setText("Device ID: " + State.device_id);
+        deviceIdTestView.setText("Device ID: " + State.deviceId);
 
         if (LocationSender.lastSendLocation != null) {
             TextView lastSendView = findViewById(R.id.lastSend);
@@ -88,7 +101,7 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         State.activityContext = this;
         TelephonyManager telephonyManager =
                 (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-        State.device_id = telephonyManager.getDeviceId();
+        State.deviceId = telephonyManager.getDeviceId();
     }
 
     private void setStart(boolean enabled) {
@@ -133,6 +146,25 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
             // Do something after user returned from app settings screen, like showing a Toast.
             Toast.makeText(this, "Permission window closed", Toast.LENGTH_SHORT)
                     .show();
+        } else if (requestCode == REQUEST_CAMERA) {
+            Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+            FileOutputStream fo;
+
+            try {
+                fo = new FileOutputStream(Config.tempImg);
+                fo.write(bytes.toByteArray());
+                fo.close();
+                Log.d(this.tag, "onActivityResult: success");
+            } catch (IOException e) {
+                Log.d(this.tag, "onActivityResult: error: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            ViewSender viewSender = new ViewSender();
+            Thread thread = new Thread(viewSender);
+            thread.start();
         }
     }
 
@@ -153,7 +185,6 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
             Intent serviceIntent = new Intent(this, SendService.class);
             serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
             ContextCompat.startForegroundService(this, serviceIntent);
-            //startService(new Intent(getBaseContext(), SendService.class));
             this.setStart(false);
         } else {
             requestPermissions();
@@ -164,5 +195,11 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
     public void stopService(View view) {
         stopService(new Intent(getBaseContext(), SendService.class));
         this.setStart(true);
+    }
+
+    public void takePhoto(View view) {
+        Log.d(this.tag, "takePhoto");
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, REQUEST_CAMERA);
     }
 }
