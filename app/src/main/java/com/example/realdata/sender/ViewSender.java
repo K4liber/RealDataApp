@@ -1,7 +1,11 @@
 package com.example.realdata.sender;
 
+import android.app.Activity;
 import android.util.Log;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.realdata.R;
 import com.example.realdata.utils.Config;
 import com.example.realdata.utils.State;
 
@@ -14,6 +18,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,7 +27,7 @@ public class ViewSender implements Runnable {
 
     @Override
     public void run() {
-        Log.d(ViewSender.tag, "run");
+        Log.d(ViewSender.tag, "run()");
         this.sendView();
     }
 
@@ -90,9 +95,16 @@ public class ViewSender implements Runnable {
             String result = null;
 
             if (serverResponseCode == 200) {
-
+                if (State.activityContext != null) {
+                    TextView txtView = ((Activity) State.activityContext)
+                            .findViewById(R.id.lastSend);
+                    txtView.setText("Image successfully uploaded");
+                }
             } else {
-                Log.d(tag, String.valueOf(serverResponseCode));
+                if (State.activityContext != null) {
+                    TextView errorView = ((Activity) State.activityContext).findViewById(R.id.error);
+                    errorView.setText("Upload image error. Status = " + serverResponseCode);
+                }
             }
 
             StringBuilder s_buffer = new StringBuilder();
