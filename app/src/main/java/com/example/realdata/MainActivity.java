@@ -32,14 +32,14 @@ import com.example.realdata.sender.LocationSender;
 import com.example.realdata.sender.ViewSender;
 import com.example.realdata.utils.Config;
 import com.example.realdata.utils.State;
+import com.example.realdata.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
@@ -50,7 +50,6 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends Activity implements EasyPermissions.PermissionCallbacks {
     private static final int REQUEST_CAMERA = 2;
-    private static final int THUMBNAIL_SIZE = 800;
     static String msg = "Android : ";
     private final int REQUEST_PERMISSIONS = 1;
     private final String[] perms = {
@@ -107,6 +106,31 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
                     State.serverURL = s.toString();
             }
         });
+
+        loadLastView();
+    }
+
+    private void loadLastView() {
+        Bitmap lastView = downloadLastView();
+
+        if (lastView != null) {
+            ivCompressed.setImageBitmap(lastView);
+        }
+    }
+
+    private ByteArrayOutputStream loadImageFromFile() {
+        try {
+            Bitmap thumbnail = getThumbnail(State.imageFileUri());
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+            Log.d(this.tag, "onActivityResult() creating bitmap");
+            ivCompressed.setImageBitmap(thumbnail);
+            return bytes;
+        } catch (IOException e) {
+            Log.d(this.tag, e.getMessage());
+        }
+
+        return null;
     }
 
     @SuppressLint("HardwareIds")
@@ -165,33 +189,28 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         } else if (requestCode == REQUEST_CAMERA) {
             Log.d(this.tag, "onActivityResult() requestCode = REQUEST_CAMERA");
 
+            if (State.lastView().exists() == false) {
+                loadLastView();
+                return;
+            }
+
+            ByteArrayOutputStream bytes = loadImageFromFile();
+            FileOutputStream fo;
+            Log.d(this.tag, "onActivityResult() writing bitmap");
+
             try {
-                Bitmap thumbnail = getThumbnail(State.imageFileUri);
-                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
-                Log.d(this.tag, "onActivityResult() creating bitmap");
-                ivCompressed.setImageBitmap(thumbnail);
-                FileOutputStream fo;
-                Log.d(this.tag, "onActivityResult() writing bitmap");
-
-                try {
-                    fo = new FileOutputStream(Config.tempImg);
-                    fo.write(bytes.toByteArray());
-                    fo.close();
-                    Log.d(this.tag, "onActivityResult: success");
-                } catch (IOException e) {
-                    Log.d(this.tag, "onActivityResult: error: " + e.getMessage());
-                    e.printStackTrace();
-                }
-
-                ViewSender viewSender = new ViewSender();
-                Thread thread = new Thread(viewSender);
-                thread.start();
+                fo = new FileOutputStream(Config.tempImg);
+                fo.write(bytes.toByteArray());
+                fo.close();
+                Log.d(this.tag, "onActivityResult: success");
             } catch (IOException e) {
-                Log.d(this.tag, "error: " + e.getMessage());
+                Log.d(this.tag, "onActivityResult: error: " + e.getMessage());
                 e.printStackTrace();
             }
 
+            ViewSender viewSender = new ViewSender();
+            Thread thread = new Thread(viewSender);
+            thread.start();
         }
     }
 
@@ -230,10 +249,9 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
     public void takePhoto(View view) {
         Log.d(this.tag, "takePhoto");
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        File image = new File(this.appFolderCheckAndCreate(), "img.jpg");
-        Uri imageFileUri = Uri.fromFile(image);
-        State.imageFileUri = imageFileUri;
-        intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, imageFileUri);
+        File lastView = State.lastView();
+        State.lastView().delete();
+        intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, State.imageFileUri());
         startActivityForResult(intent, REQUEST_CAMERA);
     }
 
@@ -243,7 +261,7 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
         onlyBoundsOptions.inJustDecodeBounds = true;
         onlyBoundsOptions.inDither=true;//optional
-        onlyBoundsOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;//optional
+        onlyBoundsOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;
         BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
         input.close();
 
@@ -254,41 +272,29 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         int originalSize = (onlyBoundsOptions.outHeight > onlyBoundsOptions.outWidth)
                 ? onlyBoundsOptions.outHeight : onlyBoundsOptions.outWidth;
 
-        double ratio = (originalSize > THUMBNAIL_SIZE) ? (originalSize / THUMBNAIL_SIZE) : 1.0;
+        double ratio = (originalSize > Config.imgMaxPixels)
+                ? (originalSize / Config.imgMaxPixels) : 1.0;
 
         BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-        bitmapOptions.inSampleSize = getPowerOfTwoForSampleRatio(ratio);
+        bitmapOptions.inSampleSize = Utils.getPowerOfTwoForSampleRatio(ratio);
         bitmapOptions.inDither = true; //optional
-        bitmapOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;//
+        bitmapOptions.inPreferredConfig=Bitmap.Config.ARGB_8888;
         input = this.getContentResolver().openInputStream(uri);
         Bitmap bitmap = BitmapFactory.decodeStream(input, null, bitmapOptions);
         input.close();
         return bitmap;
     }
 
-    private static int getPowerOfTwoForSampleRatio(double ratio){
-        int k = Integer.highestOneBit((int)Math.floor(ratio));
-        if(k==0) return 1;
-        else return k;
-    }
-
-    private String appFolderCheckAndCreate(){
-        String appFolderPath="";
-        File externalStorage = Environment.getExternalStorageDirectory();
-
-        if (externalStorage.canWrite()) {
-            appFolderPath = externalStorage.getAbsolutePath() + "/MyApp";
-            File dir = new File(appFolderPath);
-
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-
-        } else {
-            Toast.makeText(this,
-                    "Storage media not found or is full!", Toast.LENGTH_SHORT).show();
+    private Bitmap downloadLastView() {
+        try {
+            URL url = new URL(State.serverURL + "/view?" +
+                    "device_id=" + State.deviceId
+            );
+            return BitmapFactory.decodeStream(url.openConnection().getInputStream());
+        } catch (IOException | NullPointerException e) {
+            e.printStackTrace();
         }
 
-        return appFolderPath;
+        return null;
     }
 }
