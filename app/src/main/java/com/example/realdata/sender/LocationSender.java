@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HttpsURLConnection;
+
 
 public class LocationSender implements Runnable {
     static final String msg = "MyRunnable: ";
@@ -108,18 +110,13 @@ public class LocationSender implements Runnable {
     private String sendLocation(Location location) {
         try {
             Log.d(msg, location.toString());
-            URL url = new URL(serverURL + "/location?" +
-                    "altitude=" + String.valueOf(location.getAltitude()) +
-                    "&longitude=" + String.valueOf(location.getLongitude()) +
-                    "&latitude=" + String.valueOf(location.getLatitude()) +
-                    "&device_id=" + this.deviceID
-            );
-            URL utlPost = new URL(serverURL + "/location");
-            HttpURLConnection httpURLConnection =
-                    (HttpURLConnection) utlPost.openConnection();
-            httpURLConnection.setRequestMethod("POST");
-            httpURLConnection.setDoInput(true);
-            httpURLConnection.setDoOutput(true);
+            URL urlPost = new URL(serverURL + "/location");
+            HttpsURLConnection httpsURLConnection =
+                    (HttpsURLConnection) urlPost.openConnection();
+            httpsURLConnection.setSSLSocketFactory(State.sslContext.getSocketFactory());
+            httpsURLConnection.setRequestMethod("POST");
+            httpsURLConnection.setDoInput(true);
+            httpsURLConnection.setDoOutput(true);
             StringBuilder result = new StringBuilder();
             boolean first = true;
             HashMap<String, String> values = new HashMap<>();
@@ -140,19 +137,19 @@ public class LocationSender implements Runnable {
                 result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
             }
             Log.d(msg, result.toString());
-            OutputStream os = httpURLConnection.getOutputStream();
+            OutputStream os = httpsURLConnection.getOutputStream();
             BufferedWriter writer = new BufferedWriter(
                     new OutputStreamWriter(os, "UTF-8"));
             writer.write(result.toString());
             writer.flush();
             writer.close();
             os.close();
-            int status = httpURLConnection.getResponseCode();
+            int status = httpsURLConnection.getResponseCode();
             Log.d(msg, "Status: " + String.valueOf(status));
 
             if (status == 200) {
                 InputStream in =
-                        new BufferedInputStream(httpURLConnection.getInputStream());
+                        new BufferedInputStream(httpsURLConnection.getInputStream());
                 Log.d(msg, in.toString());
                 error = "";
                 updateErrorTextView();

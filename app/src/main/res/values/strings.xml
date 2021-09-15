@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">RealData</string>
-    <string name="title">Real Data</string>
-    <string name="stop_sending_data">Stop sending data</string>
-    <string name="start_sending_data">Start sending data</string>
+    <string name="app_name">UCantHide</string>
+    <string name="title">UCantHide</string>
+    <string name="stop_sending_location">Stop sending location</string>
+    <string name="start_sending_location">Start sending location</string>
 </resources>

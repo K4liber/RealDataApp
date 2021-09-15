@@ -40,8 +40,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateFactory;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.AppSettingsDialog;
@@ -88,25 +102,6 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         TextView sendErrorView = findViewById(R.id.error);
         sendErrorView.setText(LocationSender.error);
         this.setStart(true);
-        EditText serverURLField = findViewById(R.id.serverURL);
-        serverURLField.setText(State.serverURL);
-        serverURLField.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void afterTextChanged(Editable s) {}
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start,
-                                          int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start,
-                                      int before, int count) {
-                if(s.length() != 0)
-                    State.serverURL = s.toString();
-            }
-        });
-
         loadLastView();
     }
 
@@ -139,6 +134,12 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         TelephonyManager telephonyManager =
                 (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
         State.deviceId = telephonyManager.getDeviceId();
+
+        try {
+            State.sslContext = this.getSSLContext();
+        } catch (Exception e) {
+            Log.d(this.tag, "Error while getting ssl context: " + e.getMessage());
+        }
     }
 
     private void setStart(boolean enabled) {
@@ -290,11 +291,36 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
             URL url = new URL(State.serverURL + "/view?" +
                     "device_id=" + State.deviceId
             );
-            return BitmapFactory.decodeStream(url.openConnection().getInputStream());
+            HttpsURLConnection httpsURLConnection =
+                    (HttpsURLConnection) url.openConnection();
+            httpsURLConnection.setSSLSocketFactory(State.sslContext.getSocketFactory());
+            httpsURLConnection.setRequestMethod("GET");
+            httpsURLConnection.setDoInput(true);
+            httpsURLConnection.setUseCaches(false);
+            return BitmapFactory.decodeStream(httpsURLConnection.getInputStream());
         } catch (IOException | NullPointerException e) {
             e.printStackTrace();
         }
 
         return null;
+    }
+
+    private SSLContext getSSLContext() throws KeyStoreException, CertificateException, NoSuchAlgorithmException, IOException, UnrecoverableKeyException, KeyManagementException {
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        final InputStream in = this.getResources().openRawResource(R.raw.cert);
+        Certificate ca = cf.generateCertificate(in);
+        // Create a KeyStore containing our trusted CAs
+        String keyStoreType = KeyStore.getDefaultType();
+        KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+        keyStore.load(null, null);
+        keyStore.setCertificateEntry("ca", ca);
+        // Create a TrustManager that trusts the CAs in our KeyStore
+        String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+        tmf.init(keyStore);
+        // Create an SSLContext that uses our TrustManager
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, tmf.getTrustManagers(), null);
+        return sslContext;
     }
 }

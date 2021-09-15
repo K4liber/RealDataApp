@@ -8,14 +8,19 @@ import android.widget.Toast;
 import com.example.realdata.BuildConfig;
 
 import java.io.File;
+import java.io.InputStream;
+import java.security.KeyStore;
+
+import javax.net.ssl.SSLContext;
 
 public class State {
-    public static String serverURL = "http://ucanthide.link:5000";
+    public static String serverURL = "https://ucanthide.link:9443";
     public static Context activityContext = null;
     public static String deviceId = null;
     public static final String secretKey = BuildConfig.SECRET_KEY;
     private static Uri imageFileUri = null;
     private static File lastView = null;
+    public static SSLContext sslContext = null;
 
     public static File lastView() {
         if (lastView != null) {

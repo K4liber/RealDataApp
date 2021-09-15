@@ -22,6 +22,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.net.ssl.HttpsURLConnection;
+
 public class ViewSender implements Runnable {
     private static final String tag = "ViewSender";
 
@@ -39,22 +41,19 @@ public class ViewSender implements Runnable {
             int bytesRead, bytesAvailable, bufferSize;
             byte[] buffer;
             int maxBufferSize = 1024 * 1024;
-            //todo change URL as per client ( MOST IMPORTANT )
-            URL url = new URL(State.serverURL + "/view");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-            // Allow Inputs &amp; Outputs.
-            connection.setDoInput(true);
-            connection.setDoOutput(true);
-            connection.setUseCaches(false);
-
-            // Set HTTP method to POST.
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Connection", "Keep-Alive");
-            connection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+            URL urlPost = new URL(State.serverURL + "/view");
+            HttpsURLConnection httpsURLConnection =
+                    (HttpsURLConnection) urlPost.openConnection();
+            httpsURLConnection.setSSLSocketFactory(State.sslContext.getSocketFactory());
+            httpsURLConnection.setRequestMethod("POST");
+            httpsURLConnection.setDoInput(true);
+            httpsURLConnection.setDoOutput(true);
+            httpsURLConnection.setUseCaches(false);
+            httpsURLConnection.setRequestProperty("Connection", "Keep-Alive");
+            httpsURLConnection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
             FileInputStream fileInputStream;
             DataOutputStream outputStream;
-            outputStream = new DataOutputStream(connection.getOutputStream());
+            outputStream = new DataOutputStream(httpsURLConnection.getOutputStream());
             outputStream.writeBytes(twoHyphens + boundary + lineEnd);
             HashMap<String, String> values = new HashMap<>();
             values.put("device_id", State.deviceId);
@@ -91,7 +90,7 @@ public class ViewSender implements Runnable {
             outputStream.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 
             // Responses from the server (code and message)
-            int serverResponseCode = connection.getResponseCode();
+            int serverResponseCode = httpsURLConnection.getResponseCode();
             String result = null;
 
             if (serverResponseCode == 200) {
@@ -108,7 +107,7 @@ public class ViewSender implements Runnable {
             }
 
             StringBuilder s_buffer = new StringBuilder();
-            InputStream is = new BufferedInputStream(connection.getInputStream());
+            InputStream is = new BufferedInputStream(httpsURLConnection.getInputStream());
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             String inputLine;
             while ((inputLine = br.readLine()) != null) {
