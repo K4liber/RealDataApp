@@ -1,4 +1,4 @@
-package com.example.realdata;
+package ucanthide.main;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -17,15 +17,15 @@ import android.os.StrictMode;
 import android.telephony.TelephonyManager;
 import android.widget.Toast;
 
-import com.example.realdata.sender.LocationSender;
-import com.example.realdata.utils.State;
+import ucanthide.main.sender.LocationSender;
+import ucanthide.main.utils_static.Config;
+import ucanthide.main.utils_static.State;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 
 
 public class SendService extends Service {
     private LocationSender locationSender = null;
-    public static final String CHANNEL_ID = "ForegroundServiceChannel";
 
     @Nullable
     @Override
@@ -44,26 +44,16 @@ public class SendService extends Service {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 0, notificationIntent, 0);
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+        Notification notification =
+                new NotificationCompat.Builder(this, RealDataApp.CHANNEL_ID)
                 .setContentTitle("Foreground Service")
                 .setContentText(input)
                 .setContentIntent(pendingIntent)
                 .build();
-        NotificationManager  mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    RealDataApp.CHANNEL_ID, RealDataApp.CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            mNotificationManager.createNotificationChannel(channel);
-            new NotificationCompat.Builder(this, RealDataApp.CHANNEL_ID);
-        }
-
-        startForeground(1, notification);
+        startForeground(2, notification);
         Toast.makeText(this, "Sending data started", Toast.LENGTH_LONG).show();
         locationSender = new LocationSender(
-                fusedLocationClient, State.serverURL, this.getDeviceID());
+                fusedLocationClient, Config.serverURL, this.getDeviceID());
         Thread thread = new Thread(locationSender);
         thread.start();
         return START_NOT_STICKY;

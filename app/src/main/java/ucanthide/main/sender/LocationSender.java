@@ -1,4 +1,4 @@
-package com.example.realdata.sender;
+package ucanthide.main.sender;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -10,8 +10,10 @@ import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 
-import com.example.realdata.R;
-import com.example.realdata.utils.State;
+import ucanthide.main.R;
+import ucanthide.main.utils_static.Config;
+import ucanthide.main.utils_static.State;
+import ucanthide.main.utils_static.Utils;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -22,9 +24,8 @@ import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,8 +38,8 @@ public class LocationSender implements Runnable {
     static final String msg = "MyRunnable: ";
     private final FusedLocationProviderClient fusedLocationClient;
     public static boolean isRunning = false;
-    private String serverURL = null;
-    private String deviceID = null;
+    private final String serverURL;
+    private final String deviceID;
     public static LocalDateTime lastSendLocation = null;
     public static String error = "";
 
@@ -76,7 +77,7 @@ public class LocationSender implements Runnable {
         isRunning = true;
 
         while (isRunning) {
-            Integer exceptions = 0;
+            int exceptions = 0;
 
             try {
                 Log.d(msg, "Trying to get last location ...");
@@ -110,13 +111,8 @@ public class LocationSender implements Runnable {
     private String sendLocation(Location location) {
         try {
             Log.d(msg, location.toString());
-            URL urlPost = new URL(serverURL + "/location");
             HttpsURLConnection httpsURLConnection =
-                    (HttpsURLConnection) urlPost.openConnection();
-            httpsURLConnection.setSSLSocketFactory(State.sslContext.getSocketFactory());
-            httpsURLConnection.setRequestMethod("POST");
-            httpsURLConnection.setDoInput(true);
-            httpsURLConnection.setDoOutput(true);
+                    Utils.getConnection("/location", "POST");
             StringBuilder result = new StringBuilder();
             boolean first = true;
             HashMap<String, String> values = new HashMap<>();
@@ -124,7 +120,7 @@ public class LocationSender implements Runnable {
             values.put("longitude", String.valueOf(location.getLongitude()));
             values.put("latitude", String.valueOf(location.getLatitude()));
             values.put("device_id", this.deviceID);
-            values.put("secret_key", State.secretKey);
+            values.put("secret_key", Config.secretKey);
 
             for(Map.Entry<String, String> entry : values.entrySet()){
                 if (first)
@@ -139,13 +135,13 @@ public class LocationSender implements Runnable {
             Log.d(msg, result.toString());
             OutputStream os = httpsURLConnection.getOutputStream();
             BufferedWriter writer = new BufferedWriter(
-                    new OutputStreamWriter(os, "UTF-8"));
+                    new OutputStreamWriter(os, StandardCharsets.UTF_8));
             writer.write(result.toString());
             writer.flush();
             writer.close();
             os.close();
             int status = httpsURLConnection.getResponseCode();
-            Log.d(msg, "Status: " + String.valueOf(status));
+            Log.d(msg, "Status: " + status);
 
             if (status == 200) {
                 InputStream in =
@@ -161,7 +157,7 @@ public class LocationSender implements Runnable {
                     txtView.setText("Last sent: " + LocalDateTime.now().toString());
                 }
             } else {
-                error = "API status code = " + String.valueOf(status);
+                error = "API status code = " + status;
             }
 
         } catch (Exception ex) {

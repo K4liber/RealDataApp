@@ -1,13 +1,13 @@
-package com.example.realdata.sender;
+package ucanthide.main.sender;
 
 import android.app.Activity;
 import android.util.Log;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.example.realdata.R;
-import com.example.realdata.utils.Config;
-import com.example.realdata.utils.State;
+import ucanthide.main.R;
+import ucanthide.main.utils_static.Config;
+import ucanthide.main.utils_static.State;
+import ucanthide.main.utils_static.Utils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -15,10 +15,7 @@ import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,26 +38,23 @@ public class ViewSender implements Runnable {
             int bytesRead, bytesAvailable, bufferSize;
             byte[] buffer;
             int maxBufferSize = 1024 * 1024;
-            URL urlPost = new URL(State.serverURL + "/view");
             HttpsURLConnection httpsURLConnection =
-                    (HttpsURLConnection) urlPost.openConnection();
-            httpsURLConnection.setSSLSocketFactory(State.sslContext.getSocketFactory());
-            httpsURLConnection.setRequestMethod("POST");
-            httpsURLConnection.setDoInput(true);
-            httpsURLConnection.setDoOutput(true);
+                    Utils.getConnection("/view", "POST");
             httpsURLConnection.setUseCaches(false);
             httpsURLConnection.setRequestProperty("Connection", "Keep-Alive");
-            httpsURLConnection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+            httpsURLConnection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" +
+                    boundary);
             FileInputStream fileInputStream;
             DataOutputStream outputStream;
             outputStream = new DataOutputStream(httpsURLConnection.getOutputStream());
             outputStream.writeBytes(twoHyphens + boundary + lineEnd);
             HashMap<String, String> values = new HashMap<>();
             values.put("device_id", State.deviceId);
-            values.put("secret_key", State.secretKey);
+            values.put("secret_key", Config.secretKey);
 
             for(Map.Entry<String, String> entry : values.entrySet()){
-                outputStream.writeBytes("Content-Disposition: form-data; name=\"" + entry.getKey() + "\"" + lineEnd);
+                outputStream.writeBytes("Content-Disposition: form-data; name=\"" +
+                        entry.getKey() + "\"" + lineEnd);
                 outputStream.writeBytes(lineEnd);
                 outputStream.writeBytes(URLEncoder.encode(entry.getValue(), "UTF-8"));
                 outputStream.writeBytes(lineEnd);
@@ -86,12 +80,11 @@ public class ViewSender implements Runnable {
                 bufferSize = Math.min(bytesAvailable, maxBufferSize);
                 bytesRead = fileInputStream.read(buffer, 0, bufferSize);
             }
+
             outputStream.writeBytes(lineEnd);
             outputStream.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
-
-            // Responses from the server (code and message)
             int serverResponseCode = httpsURLConnection.getResponseCode();
-            String result = null;
+            String result;
 
             if (serverResponseCode == 200) {
                 if (State.activityContext != null) {
@@ -117,10 +110,7 @@ public class ViewSender implements Runnable {
             fileInputStream.close();
             outputStream.flush();
             outputStream.close();
-
-            if (result != null) {
-                Log.d("result_for upload", result);
-            }
+            Log.d("result_for upload", result);
         } catch (Exception e) {
             e.printStackTrace();
         }

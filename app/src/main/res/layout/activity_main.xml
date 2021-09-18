@@ -4,7 +4,9 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:context="com.example.realdata.MainActivity">
+    tools:context=".main.MainActivity"
+    android:gravity="center"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -12,75 +14,53 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textView1"
+        <ImageButton
+            android:id="@+id/imageButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:text="@string/title"
-            android:textSize="30sp" />
+            android:contentDescription="Last view of the device"
+            android:onClick="takePhoto"
+            android:src="@drawable/upload"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+        <TextView
+            android:id="@+id/deviceId"
             android:gravity="center"
-            android:orientation="vertical">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/device_id" />
 
-            <ImageButton
-                android:id="@+id/imageButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="takePhoto"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true"
-                android:src="@drawable/upload" />
+        <Button
+            android:id="@+id/startService"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="startService"
+            android:text="@string/start_sending_location" />
 
-            <TextView
-                android:id="@+id/deviceId"
-                android:gravity="center"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Device ID: " />
+        <Button
+            android:id="@+id/stopService"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="stopService"
+            android:text="@string/stop_sending_location" />
 
-            <Button
-                android:id="@+id/startService"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/imageButton"
-                android:layout_centerHorizontal="true"
-                android:onClick="startService"
-                android:text="@string/start_sending_location" />
+        <TextView
+            android:textStyle="bold"
+            android:textColor="@color/common_google_signin_btn_text_dark_focused"
+            android:id="@+id/lastSend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/nothing_send_yet" />
 
-            <Button
-                android:id="@+id/stopService"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/button2"
-                android:layout_alignStart="@+id/button2"
-                android:layout_alignEnd="@+id/button2"
-                android:onClick="stopService"
-                android:text="@string/stop_sending_location" />
-
-            <TextView
-                android:textStyle="bold"
-                android:textColor="@color/common_google_signin_btn_text_dark_focused"
-                android:id="@+id/lastSend"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Nothing send yet ..." />
-
-            <TextView
-                android:textStyle="bold"
-                android:textColor="@color/design_default_color_error"
-                android:id="@+id/error"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="" />
+        <TextView
+            android:textStyle="bold"
+            android:textColor="@color/design_default_color_error"
+            android:id="@+id/error"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="" />
 
 
-        </LinearLayout>
     </LinearLayout>
 </RelativeLayout>

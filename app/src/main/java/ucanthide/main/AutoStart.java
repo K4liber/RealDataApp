@@ -1,4 +1,4 @@
-package com.example.realdata;
+package ucanthide.main;
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;

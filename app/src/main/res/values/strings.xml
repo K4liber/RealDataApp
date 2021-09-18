@@ -3,4 +3,6 @@
     <string name="title">UCantHide</string>
     <string name="stop_sending_location">Stop sending location</string>
     <string name="start_sending_location">Start sending location</string>
+    <string name="device_id">Device ID:</string>
+    <string name="nothing_send_yet">Nothing send yet ...</string>
 </resources>
