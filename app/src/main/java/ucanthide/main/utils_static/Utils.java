@@ -33,7 +33,7 @@ public class Utils {
         URL urlPost = new URL(Config.serverURL + endpoint);
         HttpsURLConnection httpsURLConnection =
                 (HttpsURLConnection) urlPost.openConnection();
-        httpsURLConnection.setSSLSocketFactory(State.sslContext.getSocketFactory());
+        httpsURLConnection.setSSLSocketFactory(State.getSSLContext().getSocketFactory());
         httpsURLConnection.setRequestMethod(method);
         httpsURLConnection.setDoInput(true);
 
@@ -44,10 +44,10 @@ public class Utils {
         return httpsURLConnection;
     }
 
-    public static SSLContext getSSLContext(Context context) throws KeyStoreException,
+    public static SSLContext getSSLContext() throws KeyStoreException,
             CertificateException, NoSuchAlgorithmException, IOException, KeyManagementException {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        final InputStream in = context.getResources().openRawResource(R.raw.cert);
+        final InputStream in = State.appContext.getResources().openRawResource(R.raw.cert);
         Certificate ca = cf.generateCertificate(in);
         String keyStoreType = KeyStore.getDefaultType();
         KeyStore keyStore = KeyStore.getInstance(keyStoreType);

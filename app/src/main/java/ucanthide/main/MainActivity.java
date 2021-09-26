@@ -34,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.AppSettingsDialog;
@@ -79,7 +80,7 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
 
         TextView sendErrorView = findViewById(R.id.error);
         sendErrorView.setText(LocationSender.error);
-        this.setStart(true);
+        this.setStart(LocationSender.isRunning(), !LocationSender.isRunning());
         loadLastView();
     }
 
@@ -112,25 +113,13 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
         TelephonyManager telephonyManager =
                 (TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
         State.deviceId = telephonyManager.getDeviceId();
-
-        try {
-            State.sslContext = Utils.getSSLContext(this);
-        } catch (Exception e) {
-            Log.d(this.tag, "Error while getting ssl context: " + e.getMessage());
-        }
     }
 
-    private void setStart(boolean enabled) {
+    private void setStart(boolean stopEnabled, boolean startEnabled) {
         Button startSendingData = findViewById(R.id.startService);
         Button stopSendingData = findViewById(R.id.stopService);
-
-        if (enabled && !LocationSender.isRunning) {
-            startSendingData.setEnabled(true);
-            stopSendingData.setEnabled(false);
-        } else {
-            startSendingData.setEnabled(false);
-            stopSendingData.setEnabled(true);
-        }
+        startSendingData.setEnabled(startEnabled);
+        stopSendingData.setEnabled(stopEnabled);
     }
 
     @Override
@@ -211,15 +200,16 @@ public class MainActivity extends Activity implements EasyPermissions.Permission
             serviceIntent.putExtra(
                     "inputExtra", "Foreground Service Example in Android");
             ContextCompat.startForegroundService(this, serviceIntent);
-            this.setStart(false);
+            this.setStart(true, false);
         } else {
             requestPermissions();
         }
     }
 
     public void stopService(View view) {
-        stopService(new Intent(getBaseContext(), SendService.class));
-        this.setStart(true);
+        this.setStart(false, false);
+        stopService(new Intent(this, SendService.class));
+        this.setStart(false, true);
     }
 
     public void takePhoto(View view) {

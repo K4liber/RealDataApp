@@ -23,6 +23,8 @@ import ucanthide.main.utils_static.State;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 
+import java.util.concurrent.TimeUnit;
+
 
 public class SendService extends Service {
     private LocationSender locationSender = null;
@@ -52,8 +54,7 @@ public class SendService extends Service {
                 .build();
         startForeground(2, notification);
         Toast.makeText(this, "Sending data started", Toast.LENGTH_LONG).show();
-        locationSender = new LocationSender(
-                fusedLocationClient, Config.serverURL, this.getDeviceID());
+        locationSender = new LocationSender(fusedLocationClient, this.getDeviceID());
         Thread thread = new Thread(locationSender);
         thread.start();
         return START_NOT_STICKY;
@@ -63,22 +64,28 @@ public class SendService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Toast.makeText(this, "Sending data stopped", Toast.LENGTH_LONG).show();
         locationSender.stop();
         stopForeground(Service.STOP_FOREGROUND_REMOVE);
+        Toast.makeText(this, "Sending data stopped", Toast.LENGTH_LONG).show();
     }
 
     @SuppressLint("HardwareIds")
     private String getDeviceID() {
-        if (State.deviceId == null) {
+        while (State.deviceId == null) {
             TelephonyManager telephonyManager =
                     (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-            State.deviceId = telephonyManager.getDeviceId();
+
+            if (telephonyManager != null) {
+                State.deviceId = telephonyManager.getDeviceId();
+            }
+
+            try {
+                TimeUnit.SECONDS.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
-        if (State.deviceId == null) {
-            Toast.makeText(this, "Cannot get device ID", Toast.LENGTH_LONG).show();
-        }
         return State.deviceId;
     }
 }

@@ -37,16 +37,14 @@ import javax.net.ssl.HttpsURLConnection;
 public class LocationSender implements Runnable {
     static final String msg = "MyRunnable: ";
     private final FusedLocationProviderClient fusedLocationClient;
-    public static boolean isRunning = false;
-    private final String serverURL;
+    private static boolean isRunning = false;
     private final String deviceID;
     public static LocalDateTime lastSendLocation = null;
     public static String error = "";
 
     public LocationSender(FusedLocationProviderClient fusedLocationProviderClient,
-                          String serverURL, String deviceID) {
+                          String deviceID) {
         fusedLocationClient = fusedLocationProviderClient;
-        this.serverURL = serverURL;
         this.deviceID = deviceID;
     }
 
@@ -166,6 +164,10 @@ public class LocationSender implements Runnable {
         }
 
         return error;
+    }
+
+    public static boolean isRunning() {
+        return LocationSender.isRunning;
     }
 
     public void stop() {

@@ -8,11 +8,12 @@ import java.io.File;
 import javax.net.ssl.SSLContext;
 
 public class State {
+    public static Context appContext = null;
     public static Context activityContext = null;
     public static String deviceId = null;
     private static Uri imageFileUri = null;
     private static File lastView = null;
-    public static SSLContext sslContext = null;
+    private static SSLContext sslContext = null;
 
     public static File lastView() {
         if (lastView != null) {
@@ -58,5 +59,13 @@ public class State {
         }
 
         return appFolderPath;
+    }
+
+    public static void setSSLContext(SSLContext sslContext) {
+        State.sslContext = sslContext;
+    }
+
+    public static SSLContext getSSLContext() {
+        return State.sslContext;
     }
 }
