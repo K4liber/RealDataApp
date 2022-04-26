@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">UCantHide</string>
-    <string name="title">UCantHide</string>
+    <string name="app_name">World Citizen</string>
+    <string name="title">World Citizen</string>
     <string name="stop_sending_location">Stop sending location</string>
     <string name="start_sending_location">Start sending location</string>
     <string name="device_id">Device ID:</string>

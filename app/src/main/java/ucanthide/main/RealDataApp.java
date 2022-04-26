@@ -10,8 +10,8 @@ import ucanthide.main.utils_static.State;
 import ucanthide.main.utils_static.Utils;
 
 public class RealDataApp extends Application {
-    public static final String CHANNEL_ID = "autoStartServiceUCantHide";
-    public static final String CHANNEL_NAME = "Auto Start Service UCantHide";
+    public static final String CHANNEL_ID = "autoStartServiceWorldCitizen";
+    public static final String CHANNEL_NAME = "Auto Start Service World Citizen";
     public static NotificationChannel serviceChannel;
     private final String tag = "RealDataApp";
 
